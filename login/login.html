@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>login</title>
+
+    <link rel="stylesheet" href="../source/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="../source/adminlte/css/AdminLTE.min.css">
+    <link rel="stylesheet" href="../source/fontawesome/css/font-awesome.min.css">
+
+    <script src="../source/jquery/jquery-1.11.3.min.js"></script>
+    <script src="../source/jquery/jquery.form.min.js"></script>
+
+    <script src="../source/bootstrap/js/bootstrap.min.js"></script>
+
+    <script src="../source/bootstrapValidator/js/bootstrapValidator.min.js"></script>
+
+    <style>
+        body {
+            width: 200px;
+        }
+
+        .modal .fa.fa-refresh {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin-left: -15px;
+            margin-top: -15px;
+            color: #000;
+            font-size: 20px;
+        }
+
+        div.modal {
+            background: rgba(255, 255, 255, 0.7) none repeat scroll 0% 0%
+        }
+
+        .form-group {
+            margin: 5px;
+        }
+
+        .row-padding {
+            padding: 0 5px 5px 5px;
+        }
+
+        .small-box {
+            margin-bottom: 0px;
+        }
+
+        #error-div{
+            padding-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="modal fade" role="dialog" id="overlay-dialog" data-backdrop="false">
+    <i class="fa fa-refresh fa-spin"></i>
+</div>
+<div id="login-div">
+    <form action="" method="post" id="login-form">
+
+        <div class="form-group has-feedback">
+            <input type="text" class="form-control" name="username" id="username" placeholder="帐户">
+            <span class="glyphicon glyphicon-user form-control-feedback"></span>
+        </div>
+
+        <div class="form-group has-feedback">
+            <input type="password" class="form-control" name="password" id="password" placeholder="密码">
+            <span class="glyphicon glyphicon-lock form-control-feedback"></span>
+        </div>
+
+        <div class="row row-padding">
+            <div class="col-sm-12">
+                <input type="hidden" name="return">
+                <button type="button" class="btn btn-primary btn-block btn-flat" id="submit-btn">登录</button>
+            </div>
+        </div>
+    </form>
+    <div id="error-div" style="display: none; color: red;">
+        ERROR：<span id="error-span"></span>
+        <div style="display: none" id="error-real"></div>
+    </div>
+</div>
+
+<div id="user-info" style="display: none;">
+    <div class="small-box bg-teal">
+        <div class="inner">
+            <h3 class="username"></h3>
+
+            <p>欢迎您！</p>
+        </div>
+        <a href="#" class="small-box-footer" id="logout-link">退出
+            <i class="fa fa-arrow-circle-right"></i></a>
+    </div>
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>

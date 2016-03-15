@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body {
+            border: none;
+            margin: 5px 0 0 0;
+        }
+
+        .tracker-line, .tracker-line-odd {
+            width: 100%;
+            display: inline-block;
+            padding: 5px;
+        }
+
+        .tracker-line-odd {
+            background-color: #eeeeee;
+        }
+
+        #result-total, #result-link-total,#result-heatMap-total {
+            background-color: #dadada;
+        }
+
+        #result-total, #result-link-total, #result-heatMap-total {
+            width: auto;
+            padding: 7px;
+            margin-top: 10px;
+            font-weight: 600;
+            word-wrap: break-word;
+            cursor: pointer;
+        }
+
+        #result-track, #result-link, #result-heatMap {
+            display: none;
+        }
+
+        #wrapper {
+            margin-top: 20px;
+        }
+
+        hr {
+            border-top: 1px solid #CCCCCC;
+            border-right: none;
+            border-left: none;
+            border-bottom: none;
+        }
+
+        #tools-normal, #tools-dev, #tools-debug {
+            display: inline-block;
+        }
+
+        #tools-dev {
+            float: right;
+        }
+
+        #tools {
+            padding: 0 7px 0 7px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tools">
+    <div id="tools-normal">
+        <button id="analyze">分析</button>
+        <button id="clear">清空</button>
+        <button id="refreshPage">刷新页面</button>
+    </div>
+    <!--<div id="tools-dev">
+        <button id="changeDebugModal">开启调试</button>
+        <div id="tools-debug">
+            <button id="refreshTracker">刷新库</button>
+            &lt;!&ndash; 调试 start&ndash;&gt;
+            <button id="debugHAR">调试HAR</button>
+            <input type="checkbox" name="" id="onlyJS" value="true"><label for="onlyJS">只看JS</label>
+        </div>
+    </div>-->
+</div>
+<!-- 调试 end-->
+<hr>
+
+<div id="result-track">
+    <div id="result-total">
+        共检测到 <span id='result-span'>0</span> 种普通监测
+        <span style="color: #b30000; font-weight: 400">（较复杂的页面请多刷新2~4次以避免因网络原因而造成监测被遗漏）</span>
+    </div>
+    <div id="result-tracker-list"></div>
+</div>
+
+<div id="result-link">
+    <div id="result-link-total">
+        含有监测的HTTP请求
+    </div>
+    <div id="result-tracker-link"></div>
+</div>
+
+<div id="result-heatMap">
+    <div id="result-heatMap-total">
+        共检测到 <span id='result-span-heatMap'>0</span> 种热力图监测
+    </div>
+    <div id="result-heatMap-list"></div>
+</div>
+
+<script src="../source/jquery/jquery-1.11.3.min.js"></script>
+<script src="track.js"></script>
+</body>
+</html>
