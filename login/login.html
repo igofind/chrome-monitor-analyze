@@ -31,10 +31,12 @@
             color: #000;
             font-size: 20px;
         }
-        p.msg{
+
+        p.msg {
             font-size: 14px;
         }
-        p.msg > .fa-cloud-download{
+
+        p.msg > .fa-cloud-download {
             cursor: pointer;
         }
 
@@ -57,9 +59,23 @@
         #error-div {
             padding-left: 5px;
         }
+
+        .form-control:focus {
+            border-color: #39c6c6 !important;
+        }
+
+        .btn-primary {
+            background-color: #39c6c6 !important;
+            border-color: #39c6c6 !important;
+        }
+
+        .btn-primary:hover{
+            background-color: #35b4b4 !important;
+            border-color: #35b4b4 !important;
+        }
     </style>
 </head>
-<body>
+<body class="skin-green">
 
 <div class="modal fade" role="dialog" id="overlay-dialog" data-backdrop="false">
     <i class="fa fa-refresh fa-spin"></i>
