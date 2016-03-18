@@ -18,6 +18,8 @@
     <style>
         body {
             width: 200px;
+            margin: 0;
+            padding: 0;
         }
 
         .modal .fa.fa-refresh {
@@ -28,6 +30,12 @@
             margin-top: -15px;
             color: #000;
             font-size: 20px;
+        }
+        p.msg{
+            font-size: 14px;
+        }
+        p.msg > .fa-cloud-download{
+            cursor: pointer;
         }
 
         div.modal {
@@ -43,10 +51,10 @@
         }
 
         .small-box {
-            margin-bottom: 0px;
+            margin-bottom: 0;
         }
 
-        #error-div{
+        #error-div {
             padding-left: 5px;
         }
     </style>
@@ -87,7 +95,10 @@
         <div class="inner">
             <h3 class="username"></h3>
 
-            <p>欢迎您！</p>
+            <p class="msg">欢迎您！</p>
+        </div>
+        <div class="icon">
+            <i class="ion ion-person-add"></i>
         </div>
         <a href="#" class="small-box-footer" id="logout-link">退出
             <i class="fa fa-arrow-circle-right"></i></a>

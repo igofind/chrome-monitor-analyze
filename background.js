@@ -22,6 +22,9 @@ me.Login = {
     // 登录状态
     isLogin: false,
 
+    // 版本更新检测用
+    newest: "1.0",
+
     // 线上/线下切换
     domain: 'http://admgr.pc.com.cn/tracker/'
     //domain: 'http://sp.pconline.com.cn:8081/admgr/tracker/'
@@ -29,12 +32,19 @@ me.Login = {
 };
 
 // 初始化登录
-$.getJSON(me.Login.domain + "action/do_extension.jsp?method=init", null, function (data) {
-    me.Login.url = data['url'];
+function initBg(){
+    $.getJSON(me.Login.domain + "action/do_extension.jsp?method=init", null, function (data) {
+        me.Login.url = data['url'];
 
-    // 证书错误(使用域名而不是ip)
-    // POST https://192.168.10.213:8443/security-server/auth.do net::ERR_INSECURE_RESPONSE
-});
+        // 版本检测
+        me.Login.newest = data["newest"];
+
+        // 证书错误(使用域名而不是ip)
+        // POST https://192.168.10.213:8443/security-server/auth.do net::ERR_INSECURE_RESPONSE
+    });
+}
+
+initBg();
 
 /**************************************事件监听*********************************************/
 // ...
@@ -118,6 +128,13 @@ function changeIcon(fag) {
 
 changeIcon();
 
+function hasNewVersion() {
+    var
+        current = parseFloat(chrome.runtime.getManifest()['version']),
+        newest = parseFloat(me.Login.newest);
+    return newest > current;
+}
+
 /**************************************通信***********************************************/
 /*如果有多个page监听onMessage事件，只有第一个调用sendResponse的page调用的sendResponse能成功*/
 
@@ -147,6 +164,7 @@ chrome.runtime.onConnect.addListener(function (port) {
 
             case 'dev-checkLogin':
                 result["isLogin"] = me.Login.isLogin;
+                result["hasNewVersion"] = hasNewVersion();
                 break;
 
             case "track-initDebugModal":

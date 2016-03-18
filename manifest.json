@@ -14,18 +14,7 @@
         // 允许跨站ajax请求的地址
         "*://*/",
 
-        "tabs",
-
-        "browsingData", // 浏览器缓存
-
-        // 自定义右键菜单需用
-        // "contextMenus"
-
-        // 桌面通知(可用于热力图)
-        "notifications"
-
-        // 背景页面(开机启动->关闭chrome)
-        // "background",
+        "tabs"
     ],
 
     "icons": {
@@ -43,8 +32,6 @@
             "source/jquery/jquery-1.11.3.min.js", // background.js中能用jq
             "background.js"
         ]
-        /*,
-                "persistent": false*/
     },
     "devtools_page": "track/devtools.html"
 }

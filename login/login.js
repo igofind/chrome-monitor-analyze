@@ -3,6 +3,9 @@ $(function () {
     var bg = chrome.extension.getBackgroundPage(),
         Login = bg['Login'];
 
+    // 每次点击图标检查版本
+    bg.initBg();
+
     if (Login.isLogin) {
 
         showLoginPanel(false);
@@ -16,6 +19,27 @@ $(function () {
             $("#login-form").attr("action", Login['url']);
             $("input[name=return]").val(Login['domain'] + Login['return']);
         }
+    }
+
+    if (bg.hasNewVersion()) {
+        var fa = $('<i class="fa fa-cloud-download"></i>');
+
+        chrome.browserAction.setBadgeText({
+            text: 'N'
+        });
+
+        chrome.browserAction.setBadgeBackgroundColor({color: "#39cccc"});
+
+        fa.on("click", function () {
+            chrome.tabs.create({
+                url: Login.domain,
+                active: true
+            }, function (tab) {
+                // ...
+            });
+        });
+
+        $("p.msg").html('下载最新版&nbsp;').append(fa);
     }
 
     $('#login-form').bootstrapValidator({
