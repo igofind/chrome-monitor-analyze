@@ -57,6 +57,25 @@ function refreshTracker(callback) {
     );
 }
 
+// 发送查询日志
+function sendLog(tabId) {
+    console.log("log");
+    chrome.tabs.get(tabId, function (tab) {
+        $.post(
+            me.Login.domain + "action/do_extension.jsp",
+            {
+                method: 'log',
+                st: me.Login._st_,
+                url: tab.url
+            },
+            function (data) {
+                // ..
+            },
+            "json"
+        );
+    });
+}
+
 // 退出登录
 function logout(callback) {
     // 关闭当前所有打开开发工具的窗口
@@ -130,24 +149,29 @@ chrome.runtime.onConnect.addListener(function (port) {
                 result["isLogin"] = me.Login.isLogin;
                 break;
 
-            case "dev-initDebugModal":
+            case "track-initDebugModal":
                 result["isDebug"] = isDebug;
                 break;
 
-            case "dev-initTracker":
+            case "track-initTracker":
                 result["trackers"] = me.Tracker;
                 break;
 
-            case "dev-changeDebugModal":
+            case "track-changeDebugModal":
                 isDebug = !isDebug;
                 result["isDebug"] = isDebug;
                 break;
 
-            case "dev-refreshTracker":
+            case "track-sendLog":
+                sendLog(msg['tabId']);
+                needResponse = false;
+                break;
+
+            case "track-refreshTracker":
                 refreshTracker(function () {
                     // 后台请求结束时回调发送trackers
                     port.postMessage({
-                        action: "dev-refreshTracker",
+                        action: "track-refreshTracker",
                         trackers: me.Tracker
                     });
                 });

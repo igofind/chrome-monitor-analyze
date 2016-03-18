@@ -30,6 +30,9 @@ $("button#analyze").on("click", function () {
 
     printDevFn("click:解析");
 
+    // 日志相关
+    port.postMessage({action: "track-sendLog", tabId: chrome.devtools.inspectedWindow.tabId});
+
     // 开始前先清空所有遗留结果
     clearAllResult();
 
@@ -76,7 +79,7 @@ $("button#clear").on("click", function () {
 
 // 刷新库
 $("button#refreshTracker").on("click", function () {
-    port.postMessage({action: 'dev-refreshTracker'});
+    port.postMessage({action: 'track-refreshTracker'});
 });
 
 // 刷新页面
@@ -88,7 +91,7 @@ $("button#refreshPage").on("click", function () {
 // 开启/关闭调试
 $("button#changeDebugModal").on("click", function () {
     printDevFn("click:开启/关闭调试");
-    port.postMessage({action: 'dev-changeDebugModal'});
+    port.postMessage({action: 'track-changeDebugModal'});
 });
 
 /****************************************主逻辑*********************************************/
@@ -103,7 +106,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 
     if (trackers == null) {
         // initTracker初始化trackers
-        port.postMessage({action: "dev-initTracker"});
+        port.postMessage({action: "track-initTracker"});
     }
     // debug
     var mt = request.response.content.mimeType;
@@ -123,23 +126,23 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
 });
 
 // initDebugModal初始化调试按钮
-port.postMessage({action: "dev-initDebugModal"});
+port.postMessage({action: "track-initDebugModal"});
 
 // initTracker初始化trackers
-port.postMessage({action: "dev-initTracker"});
+port.postMessage({action: "track-initTracker"});
 
 // 接收反馈信息
 port.onMessage.addListener(function (result) {
 
     switch (result["action"]) {
 
-        case "dev-initTracker":
-        case "dev-refreshTracker":
+        case "track-initTracker":
+        case "track-refreshTracker":
             trackers = result['trackers'];
             break;
 
-        case "dev-initDebugModal":
-        case "dev-changeDebugModal":
+        case "track-initDebugModal":
+        case "track-changeDebugModal":
             changeDebugModal(result["isDebug"]);
             break;
 
@@ -177,7 +180,7 @@ function doMain(content) {
                 trackerResult[trackerId] = tracker;
 
                 if ((resultLines % 2) == 0) {
-                    writeToTracker("<span class='tracker-line-odd'>" + tracker['name'] + "：" + labels[j] + "</span>");
+                    writeToTracker("<span class='tracker-line tracker-line-odd'>" + tracker['name'] + "：" + labels[j] + "</span>");
                 } else {
                     writeToTracker("<span class='tracker-line'>" + tracker['name'] + "：" + labels[j] + "</span>");
                 }
@@ -221,14 +224,14 @@ function doLink(request) {
                     countTracker();
 
                     if ((resultLines % 2) == 0) {
-                        writeToTracker("<span class='tracker-line-odd'>" + tracker['name'] + "：" + labels[j] + "</span>");
+                        writeToTracker("<span class='tracker-line tracker-line-odd'>" + tracker['name'] + "：" + labels[j] + "</span>");
                     } else {
                         writeToTracker("<span class='tracker-line'>" + tracker['name'] + "：" + labels[j] + "</span>");
                     }
                 }
 
                 if ((linkLines % 2) == 0) {
-                    writeToLink("<span class='tracker-line-odd'>" + url + "</span>");
+                    writeToLink("<span class='tracker-line tracker-line-odd'>" + url + "</span>");
                 } else {
                     writeToLink("<span class='tracker-line'>" + url + "</span>");
                 }
@@ -264,7 +267,7 @@ function doHeatMap(request) {
                 trackerHeatMaps[trackerId] = tracker;
 
                 if ((heatMapLines % 2) == 0) {
-                    writeToHeatMap("<span class='tracker-line-odd'>" + tracker['name'] + "：" + heatMaps[j] + "</span>");
+                    writeToHeatMap("<span class='tracker-line tracker-line-odd'>" + tracker['name'] + "：" + heatMaps[j] + "</span>");
                 } else {
                     writeToHeatMap("<span class='tracker-line'>" + tracker['name'] + "：" + heatMaps[j] + "</span>");
                 }

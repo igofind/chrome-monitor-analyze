@@ -7,19 +7,23 @@
         body {
             border: none;
             margin: 5px 0 0 0;
+            padding: 0;
         }
 
         .tracker-line, .tracker-line-odd {
             width: 100%;
             display: inline-block;
-            padding: 5px;
+            padding: 5px 0 5px 0;
+            text-indent: 7px;
+            overflow-x: hidden;
+            word-wrap: break-word;
         }
 
         .tracker-line-odd {
             background-color: #eeeeee;
         }
 
-        #result-total, #result-link-total,#result-heatMap-total {
+        #result-total, #result-link-total, #result-heatMap-total {
             background-color: #dadada;
         }
 
@@ -29,6 +33,7 @@
             margin-top: 10px;
             font-weight: 600;
             word-wrap: break-word;
+            overflow-x: hidden;
             cursor: pointer;
         }
 
@@ -45,6 +50,7 @@
             border-right: none;
             border-left: none;
             border-bottom: none;
+            width: auto;
         }
 
         #tools-normal, #tools-dev, #tools-debug {
