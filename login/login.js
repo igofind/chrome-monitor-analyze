@@ -25,7 +25,7 @@ $(function () {
         var fa = $('<i class="fa fa-cloud-download"></i>');
 
         chrome.browserAction.setBadgeText({
-            text: 'N'
+            text: '1'
         });
 
         chrome.browserAction.setBadgeBackgroundColor({color: "#39cccc"});

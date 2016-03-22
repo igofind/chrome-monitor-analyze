@@ -5,7 +5,7 @@
 
     "description": "Chrome_PCGroup_监测分析",
 
-    "version": "1.01",
+    "version": "1.2",
 
     // 脱机运行
     "offline_enabled": true,
