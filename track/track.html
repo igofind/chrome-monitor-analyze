@@ -15,30 +15,34 @@
             display: inline-block;
             padding: 5px 0 5px 0;
             text-indent: 7px;
-            overflow-x: hidden;
             word-wrap: break-word;
+        }
+
+        span.tracker-line.tracker-link {
+            overflow-x: hidden;
+            word-wrap: normal;
         }
 
         .tracker-line-odd {
             background-color: #eeeeee;
         }
 
-        #result-total, #result-link-total, #result-heatMap-total {
-            background-color: #dadada;
-        }
-
-        #result-total, #result-link-total, #result-heatMap-total {
+        .total {
             width: auto;
             padding: 7px;
             margin-top: 10px;
             font-weight: 600;
-            word-wrap: break-word;
             overflow-x: hidden;
             cursor: pointer;
+            background-color: #dadada;
         }
 
-        #result-track, #result-link, #result-heatMap {
+        .list {
             display: none;
+        }
+
+        #result-tracker .list, #result-heatMap .list{
+            display: block;
         }
 
         #wrapper {
@@ -75,7 +79,7 @@
         <button id="refreshPage">刷新</button>
     </div>
     <div id="tools-dev">
-            <button id="refreshTracker">更新监测</button>
+        <button id="refreshTracker">更新监测</button>
         <!--<button id="changeDebugModal">开启调试</button>-->
         <div id="tools-debug">
             <button id="debugHAR">调试HAR</button>
@@ -86,26 +90,33 @@
 <!-- 调试 end-->
 <hr>
 
-<div id="result-track">
-    <div id="result-total">
-        共检测到 <span id='result-span'>0</span> 种普通监测
+<div id="result-tracker">
+    <div class="total">
+        共检测到 <span class='count'>0</span> 种普通监测
         <span style="color: #b30000; font-weight: 400">（较复杂的页面请多刷新2~4次以避免因网络原因而造成监测被遗漏）</span>
     </div>
-    <div id="result-tracker-list"></div>
+    <div class="list"></div>
 </div>
 
-<div id="result-link">
-    <div id="result-link-total">
-        含有监测的HTTP请求
+<div id="result-tracker-link">
+    <div class="total">
+        含有普通监测的HTTP请求, 共 <span class="count">0</span> 个
     </div>
-    <div id="result-tracker-link"></div>
+    <div class="list"></div>
 </div>
 
 <div id="result-heatMap">
-    <div id="result-heatMap-total">
-        共检测到 <span id='result-span-heatMap'>0</span> 种热力图监测
+    <div class="total">
+        共检测到 <span class="count">0</span> 种热力图监测
     </div>
-    <div id="result-heatMap-list"></div>
+    <div class="list"></div>
+</div>
+
+<div id="result-heatMap-link">
+    <div class="total">
+        含有热力图监测的HTTP请求, 共 <span class="count">0</span> 个
+    </div>
+    <div class="list"></div>
 </div>
 
 <script src="../source/jquery/jquery-1.11.3.min.js"></script>

@@ -2,28 +2,42 @@
 var port = chrome.runtime.connect({name: "track-connect-background"});
 
 var
+    // 标识
+    TRACKER = 1,
+    TRACKER_LINK = 2,
+    HEAT_MAP = 3,
+    HEAT_MAP_LINK = 4,
+    // html元素中存储的数据的名称
+    DATA_NAME = "resultCnt",
+
+    // 标识库
     trackers = null,
 
-    trackerResult = {},// 记录HAR分析结果(排重用)
-    resultLines = 0,
+    // 结果
+    result = {},
 
-    trackerLinks = {},// 记录HTTP请求分析结果(排重用)
-    linkLines = 0,
+    // 各个结果的列表区域
+    trackerDiv = $("#result-tracker"),
+    trackerListDiv = trackerDiv.find(".list").first(),
+    trackerCntSpan = trackerDiv.find(".count").first(),
 
-    trackerHeatMaps = {},// 记录HTTP请求(热力图)分析结果(排重用)
-    heatMapLines = 0;
+    trackerLinkDiv = $("#result-tracker-link"),
+    trackerLinkListDiv = trackerLinkDiv.find(".list").first(),
+    trackerLinkCntSpan = trackerLinkDiv.find(".count").first(),
 
-var
-    trackDiv = $("div#result-track"),
-    trackListDiv = $("div#result-tracker-list"),
-    trackerCntSpan = $("#result-span"),
+    heatMapDiv = $("#result-heatMap"),
+    heatMapListDiv = heatMapDiv.find(".list").first(),
+    heatMapCntSpan = heatMapDiv.find(".count").first(),
 
-    linkDiv = $("div#result-link"),
-    linkListDiv = $("div#result-tracker-link"),
+    heatMapLinkDiv = $("#result-heatMap-link"),
+    heatMapLinkListDiv = heatMapLinkDiv.find(".list").first(),
+    heatMapLinkCntSpan = heatMapLinkDiv.find(".count").first();
 
-    heatMapDiv = $("div#result-heatMap"),
-    heatMapListDiv = $("div#result-heatMap-list"),
-    heatMapCntSpan = $("#result-span-heatMap");
+// 初始化
+result[TRACKER] = {};
+result[TRACKER_LINK] = {};
+result[HEAT_MAP] = {};
+result[HEAT_MAP_LINK] = {};
 
 // 解析
 $("button#analyze").on("click", function () {
@@ -35,15 +49,6 @@ $("button#analyze").on("click", function () {
 
     // 开始前先清空所有遗留结果
     clearAllResult();
-
-    // 检测Tracker
-    showResultCount();
-
-    // 检测Tracker相关的http请求
-    showResultLink();
-
-    // 检测heatMap相关的http请求
-    showHeatMapResult();
 
     chrome.devtools.inspectedWindow.getResources(function (arrs) {
 
@@ -57,8 +62,8 @@ $("button#analyze").on("click", function () {
 
                 case "document":
                 case "script":
-                    arr.getContent(function (content, encoding) {
-                        doMain(content);
+                    arr.getContent(function (content) {
+                        doMain(content, false);
                     });
                     break;
 
@@ -84,6 +89,11 @@ $("button#refreshTracker").on("click", function () {
 
 // 刷新页面
 $("button#refreshPage").on("click", function () {
+
+    // 清空上次请求的地址
+    clearTrackerLink();
+    cleatHeatMapLink();
+
     printDevFn("click:refreshPage");
     chrome.devtools.inspectedWindow.reload();
 });
@@ -92,6 +102,11 @@ $("button#refreshPage").on("click", function () {
 $("button#changeDebugModal").on("click", function () {
     printDevFn("click:开启/关闭调试");
     port.postMessage({action: 'track-changeDebugModal'});
+});
+
+// #result-total, #result-link-total, #result-heatMap-total 折叠和展开
+$(".total").on("click", function () {
+    $(this).parent().find(".list").first().slideToggle("normal");
 });
 
 /****************************************主逻辑*********************************************/
@@ -109,20 +124,20 @@ chrome.devtools.network.onRequestFinished.addListener(function (request) {
         port.postMessage({action: "track-initTracker"});
     }
     // debug
-    var mt = request.response.content.mimeType;
+    var
+        url = request.request.url,
+        onlyJS = $("#onlyJS").prop("checked"),
+        mt = request.response.content.mimeType;
 
-    if ($("#onlyJS").prop("checked") && (mt == "text/javascript" || mt == "application/javascript")) {
+    if (onlyJS && (mt == "text/javascript" || mt == "application/javascript")) {
 
-        printDevFn(request.request.url);
-    } else if (!$("#onlyJS").prop("checked")) {
+        printDevFn(url);
+    } else if(!onlyJS){
 
-        printDevFn(request.request.url);
+        printDevFn(url);
     }
 
-    doLink(request);
-
-    // heat map
-    doHeatMap(request);
+    doMain(url, true);
 });
 
 // initDebugModal初始化调试按钮
@@ -151,213 +166,205 @@ port.onMessage.addListener(function (result) {
     }
 });
 
-// 主要分析逻辑(单独分析每个js)
-function doMain(content) {
+// 分析js文件
+function doTrack(content, target, mark, tracker, isLink) {
+
+    if (content.indexOf(mark) != -1 && !result[target][tracker["trackerId"]]) {
+
+        writeToList(content, target, mark, tracker, isLink);
+    }
+}
+
+// 分析发送的http请求
+function doLink(url, linkTarget, listTarget, mark, tracker) {
+
+    if (url.indexOf(mark) != -1 && !result[linkTarget][url]) {
+
+        writeToList(url, linkTarget, mark, tracker, true);
+
+        // 注：http请求检测可以补充遗漏的Tracker
+        if (!result[listTarget][tracker["trackerId"]] && !result[listTarget][tracker["trackerId"]]) {
+
+            writeToList(url, listTarget, mark, tracker, false);
+        }
+    }
+}
+
+// 分析主入口
+function doMain(content, isLink) {
 
     var length = trackers.length;
 
     for (var i = 0; i < length; i++) {
-        var tracker = trackers[i],
-            trackerId = tracker['trackerId'],
-            labels = tracker["label"].split(";");
+        var
+            marks = "",
+            tracker = trackers[i],
+            heatMaps = tracker["heatMap"],
+            labels = tracker["label"];
 
-        if (!tracker["label"]) {
-            continue;
-        }
+        if (labels != null && labels.trim() != "") {
 
-        for (var j = 0; j < labels.length; j++) {
+            marks = labels.split(";");
 
-            if (labels[j] === null || labels[j] === "" || labels[j].trim() === "") {
-                continue;
-            }
+            for (var j = 0; j < marks.length; j++) {
 
-            if (contentcontent.indexOf(labels[j]) != -1 && !trackerResult[trackerId]) {
+                if (marks[j] === null || marks[j] === "" || marks[j].trim() === "") {
+                    continue;
+                }
+                // 文件
+                if (!isLink) {
+                    doTrack(content, TRACKER, marks[j], tracker);
 
-                resultLines++;
-
-                countTracker();
-
-                trackerResult[trackerId] = tracker;
-
-                if ((resultLines % 2) == 0) {
-                    writeToTracker("<span class='tracker-line tracker-line-odd'>" + tracker['name'] + "：" + labels[j] + "</span>");
-                } else {
-                    writeToTracker("<span class='tracker-line'>" + tracker['name'] + "：" + labels[j] + "</span>");
+                } else { // link 链接
+                    doLink(content, TRACKER_LINK, TRACKER, marks[j], tracker);
                 }
             }
         }
-    }
-}
 
-// 检测所有发送的http请求
-function doLink(request) {
+        if (heatMaps != null && heatMaps.trim() != "") {
+            marks = heatMaps.split(";");
 
-    var
-        url = request.request.url,
-        length = trackers.length;
+            for (var k = 0; k < marks.length; k++) {
 
-    for (var i = 0; i < length; i++) {
-        var tracker = trackers[i],
-            trackerId = tracker['trackerId'],
-            labels = tracker["label"].split(";");
-
-        if (!tracker["label"]) {
-            continue;
-        }
-
-        for (var j = 0; j < labels.length; j++) {
-
-            if (labels[j] === null || labels[j] === "" || labels[j].trim() === "") {
-                continue;
-            }
-
-            if (url.indexOf(labels[j]) != -1 && !trackerLinks[trackerId]) {
-
-                linkLines++;
-
-                trackerLinks[trackerId] = tracker;
-
-                // TODO 注：http请求检测可以补充遗漏的Tracker
-                if (!trackerResult[trackerId]) {
-
-                    resultLines++;
-                    countTracker();
-
-                    if ((resultLines % 2) == 0) {
-                        writeToTracker("<span class='tracker-line tracker-line-odd'>" + tracker['name'] + "：" + labels[j] + "</span>");
-                    } else {
-                        writeToTracker("<span class='tracker-line'>" + tracker['name'] + "：" + labels[j] + "</span>");
-                    }
+                if (marks[k] === null || marks[k] === "" || marks[k].trim() === "") {
+                    continue;
                 }
+                // 文件
+                if (!isLink) {
+                    doTrack(content, HEAT_MAP, marks[k], tracker);
 
-                if ((linkLines % 2) == 0) {
-                    writeToLink("<span class='tracker-line tracker-line-odd'>" + url + "</span>");
-                } else {
-                    writeToLink("<span class='tracker-line'>" + url + "</span>");
+                } else { // link 链接
+                    doLink(content, HEAT_MAP_LINK, HEAT_MAP, marks[k], tracker);
                 }
             }
         }
-    }
-}
 
-function doHeatMap(request) {
-
-    var
-        url = request.request.url,
-        length = trackers.length;
-
-    for (var i = 0; i < length; i++) {
-        var tracker = trackers[i],
-            trackerId = tracker['trackerId'];
-
-        if (!tracker['heatMap']) {
-            continue;
-        }
-
-        var heatMaps = tracker["heatMap"].split(";");
-
-        for (var j = 0; j < heatMaps.length; j++) {
-
-            if (url.indexOf(heatMaps[j]) != -1 && !trackerHeatMaps[trackerId]) {
-
-                heatMapLines++;
-
-                countHeatMap();
-
-                trackerHeatMaps[trackerId] = tracker;
-
-                if ((heatMapLines % 2) == 0) {
-                    writeToHeatMap("<span class='tracker-line tracker-line-odd'>" + tracker['name'] + "：" + heatMaps[j] + "</span>");
-                } else {
-                    writeToHeatMap("<span class='tracker-line'>" + tracker['name'] + "：" + heatMaps[j] + "</span>");
-                }
-            }
-        }
     }
 }
 
 // 清理所有的监测结果
 function clearAllResult() {
+    clearTracker();
+    clearTrackerLink();
+    clearHeatMap();
+    cleatHeatMapLink();
+}
+
+function clearTracker() {
     // Tracker
-    trackerResult = {};
-    resultLines = 0;
+    result[TRACKER] = {};
 
-    trackDiv.hide();
-    trackListDiv.html("");
-    trackerCntSpan.data("countTracker", 0).html(0);
+    trackerListDiv.html("");
+    trackerCntSpan.data(DATA_NAME, 0).html(0);
+}
 
-    // link
-    trackerLinks = {};
-    linkLines = 0;
+function clearTrackerLink() {
+    // Tracker Link
+    result[TRACKER_LINK] = {};
 
-    linkDiv.hide();
-    linkListDiv.html("");
+    trackerLinkListDiv.html("");
+    trackerLinkCntSpan.data(DATA_NAME, 0).html(0);
+}
 
-    // Tracker
-    trackerHeatMaps = {};
-    heatMapLines = 0;
+function clearHeatMap() {
+    // HeatMap
+    result[HEAT_MAP] = {};
 
-    heatMapDiv.hide();
     heatMapListDiv.html("");
-    heatMapCntSpan.data("countTracker", 0).html(0);
+    heatMapCntSpan.data(DATA_NAME, 0).html(0);
 }
 
-// #result-total, #result-link-total, #result-heatMap-total 折叠和展开
-$("#result-total").on("click", function () {
-    trackListDiv.slideToggle("normal");
-});
-$("#result-link-total").on("click", function () {
-    linkListDiv.slideToggle("normal");
-});
-$("#result-heatMap-total").on("click", function () {
-    heatMapListDiv.slideToggle("normal");
-});
+function cleatHeatMapLink() {
+    // HeatMap Link
+    result[HEAT_MAP_LINK] = {};
 
-function showResultCount() {
-    trackDiv.show();
+    heatMapLinkListDiv.html("");
+    heatMapLinkCntSpan.data(DATA_NAME, 0).html(0);
 }
 
-function showResultLink() {
-    linkDiv.show();
-}
+// 输出统计结果
+function countResult(target) {
+    var count, cntSpan;
 
-function showHeatMapResult() {
-    heatMapDiv.show();
-}
+    // 计数(用于单双行的着色)
+    result[target]["lines"] == null ? result[target]["lines"] = 1 : result[target]["lines"]++;
 
-// 输出结果统计
-function countTracker() {
-    var count = trackerCntSpan.data("countTracker");
-
+    switch (target) {
+        case TRACKER:
+            cntSpan = trackerCntSpan;
+            break;
+        case TRACKER_LINK:
+            cntSpan = trackerLinkCntSpan;
+            break;
+        case HEAT_MAP:
+            cntSpan = heatMapCntSpan;
+            break;
+        case HEAT_MAP_LINK:
+            cntSpan = heatMapLinkCntSpan;
+            break;
+        default:
+            break;
+    }
+    count = cntSpan.data(DATA_NAME);
     count = count ? count + 1 : 1;
 
-    trackerCntSpan.data("countTracker", count);
-    trackerCntSpan.html(count);
-}
-
-// 输出结果统计
-function countHeatMap() {
-    var count = trackerCntSpan.data("countHeatMap");
-
-    count = count ? count + 1 : 1;
-
-    heatMapCntSpan.data("countHeatMap", count);
-    heatMapCntSpan.html(count);
+    cntSpan.data(DATA_NAME, count);
+    cntSpan.html(count);
+    return count;
 }
 
 // 输出到页面监测结果区域中
-function writeToTracker(str) {
-    trackListDiv.append(str + "<br>");
-}
+function writeToList(content, target, label, tracker, isLink) {
+    var
+        count = countResult(target),
 
-// 输出到页面http请求监测结果区域中
-function writeToLink(str) {
-    linkListDiv.append(str + "<br>");
-}
+        str = isLink
+            ? count + ". " + content
+            : tracker['name'] + " : " + label,
 
-// 输出到页面http请求监测结果区域中
-function writeToHeatMap(str) {
-    heatMapListDiv.append(str + "<br>");
+        listDiv,
+        strPrefix = "<span class='tracker-line'>",
+        strPrefixOdd = "<span class='tracker-line tracker-line-odd'>",
+        strLinkPrefix = "<span class='tracker-line tracker-link' title='" + content + "'>",
+        strLinkPrefixOdd = "<span class='tracker-line tracker-link tracker-line-odd' title='" + content + "'>",
+        strSuffix = "</span>",
+
+        targetPrefix = isLink ? strLinkPrefix : strPrefix,
+        targetPrefixOdd = isLink ? strLinkPrefixOdd : strPrefixOdd;
+
+    if (isLink) {
+        // url 排重
+        result[target][content] = true;
+    }
+
+    result[target][tracker['trackerId']] = tracker;
+
+    switch (target) {
+
+        case TRACKER:
+            listDiv = trackerListDiv;
+            break;
+        case TRACKER_LINK:
+            listDiv = trackerLinkListDiv;
+            break;
+        case HEAT_MAP:
+            listDiv = heatMapListDiv;
+            break;
+        case HEAT_MAP_LINK:
+            listDiv = heatMapLinkListDiv;
+            break;
+
+        default:
+            break;
+    }
+
+    if ((result[target]["lines"] % 2) == 0) {
+        str = targetPrefixOdd + str + strSuffix;
+    } else {
+        str = targetPrefix + str + strSuffix;
+    }
+
+    listDiv.append(str + "<br>");
 }
 
 /****************************************调试*********************************************/

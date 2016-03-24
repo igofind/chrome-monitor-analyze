@@ -1,7 +1,9 @@
 $(function () {
 
-    var bg = chrome.extension.getBackgroundPage(),
-        Login = bg['Login'];
+    var
+        bg = chrome.extension.getBackgroundPage(),
+        Login = bg['Login'],
+        loginForm = $('#login-form');
 
     // 每次点击图标检查版本
     bg.initBg();
@@ -42,7 +44,7 @@ $(function () {
         $("p.msg").html('下载最新版&nbsp;').append(fa);
     }
 
-    $('#login-form').bootstrapValidator({
+    loginForm.bootstrapValidator({
         fields: {
             username: {
                 validators: {
@@ -62,16 +64,16 @@ $(function () {
     });
 
     // 不加这句，原生的submit会被触发!
-    $("#login-form").ajaxForm();
+    loginForm.ajaxForm();
 
     // 登录
     $("#submit-btn").on("click", function () {
-        var validator = $("#login-form").data('bootstrapValidator').validate();
+        var validator = loginForm.data('bootstrapValidator').validate();
         if (!validator.isValid()) {
             return false;
         }
 
-        $("#login-form").ajaxSubmit({
+        loginForm.ajaxSubmit({
             dataType: 'json',
             beforeSubmit: function () {
                 loading();
@@ -119,6 +121,12 @@ $(function () {
                 return false;
             }
         });
+    });
+
+    $('#login-div').on("keydown", function (event) {
+        if(13 == event.keyCode){
+            $("#submit-btn").click();
+        }
     });
 
     // 退出
