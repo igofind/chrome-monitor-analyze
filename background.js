@@ -20,7 +20,10 @@ me.Login = {
     logout: "action/do_extension.jsp?method=logout",
 
     // 登录状态
-    isLogin: false,
+    // isLogin: false,
+
+    // TODO 离线调试
+    isLogin: true,
 
     // 版本更新检测用
     newest: "1.0",
@@ -43,8 +46,8 @@ function initBg(){
         // POST https://192.168.10.213:8443/security-server/auth.do net::ERR_INSECURE_RESPONSE
     });
 }
-
-initBg();
+// TODO 离线调试时注释掉
+// initBg();
 
 /**************************************事件监听*********************************************/
 // ...
@@ -52,7 +55,7 @@ initBg();
 /**************************************自定义方法*******************************************/
 // 获取tracker信息
 function refreshTracker(callback) {
-    $.post(
+    /*$.post(
         me.Login.domain + "action/do_extension.jsp",
         {
             method: 'tracker',
@@ -64,7 +67,13 @@ function refreshTracker(callback) {
             callback();
         },
         "json"
-    );
+    );*/
+    // 离线时用本地的数据 data/site.json
+    var url = chrome.extension.getURL('/data/site.json');
+    $.getJSON( url , function (data) {
+        me.Tracker = data["trackers"];
+        callback();
+    });
 }
 
 // 发送查询日志

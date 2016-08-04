@@ -6,7 +6,7 @@ $(function () {
         loginForm = $('#login-form');
 
     // 每次点击图标检查版本
-    bg.initBg();
+    // bg.initBg(); // 离线调试时注释掉
 
     if (Login.isLogin) {
 
